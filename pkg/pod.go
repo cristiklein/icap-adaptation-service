@@ -9,6 +9,7 @@ import (
 	guuid "github.com/google/uuid"
 	core "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilpointer "k8s.io/utils/pointer"
 
 	"github.com/matryer/try"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -87,6 +88,7 @@ func (pa PodArgs) GetPodObject() *core.Pod {
 			Namespace: pa.PodNamespace,
 		},
 		Spec: core.PodSpec{
+			AutomountServiceAccountToken: utilpointer.BoolPtr(false),
 			ImagePullSecrets: []core.LocalObjectReference{{Name: "regcred"}},
 			RestartPolicy:    core.RestartPolicyNever,
 			Volumes: []core.Volume{
@@ -106,16 +108,6 @@ func (pa PodArgs) GetPodObject() *core.Pod {
 						},
 					},
 				},
-				{
-					Name: "request-processing-config",
-					VolumeSource: core.VolumeSource{
-						ConfigMap: &core.ConfigMapVolumeSource{
-							LocalObjectReference: core.LocalObjectReference{
-								Name: "request-processing-config",
-							},
-						},
-					},
-				},
 			},
 			Containers: []core.Container{
 				{
@@ -131,16 +123,15 @@ func (pa PodArgs) GetPodObject() *core.Pod {
 					VolumeMounts: []core.VolumeMount{
 						{Name: "sourcedir", MountPath: pa.InputMount},
 						{Name: "targetdir", MountPath: pa.OutputMount},
-						{Name: "request-processing-config", MountPath: "/app/config"},
 					},
 					Resources: core.ResourceRequirements{
 						Limits: core.ResourceList{
-							core.ResourceCPU: resource.MustParse("0.1"),
+							core.ResourceCPU: resource.MustParse("1"),
 							core.ResourceMemory: resource.MustParse("1500Mi"),
 						},
 						Requests: core.ResourceList{
-							core.ResourceCPU: resource.MustParse("1"),
-							core.ResourceMemory: resource.MustParse("1500Mi"),
+							core.ResourceCPU: resource.MustParse("0.1"),
+							core.ResourceMemory: resource.MustParse("150Mi"),
 						},
 					},
 				},
